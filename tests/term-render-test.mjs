@@ -2,7 +2,7 @@
 // terminal bundle, then simulated typing/Enter interactions.
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
 
@@ -11,13 +11,18 @@ import { JSDOM } from "jsdom";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PROFILE_NM = process.env.DSH_PROFILE_NM ?? "C:/Users/Li Bojian/.dsh/profiles/node_modules";
 const BUNDLE = join(HERE, "..", "lib", "client.js");
-const req = createRequire(PROFILE_NM + "/x.js");
+const req = createRequire(resolve(PROFILE_NM, "x.js"));
 
 const dom = new JSDOM("<!doctype html><html><head></head><body></body></html>", {
   url: "http://127.0.0.1:3080/",
   pretendToBeVisual: true
 });
 const { window } = dom;
+// jsdom versions differ on PointerEvent; the drag handlers only read
+// clientX/clientY, so MouseEvent is a sufficient stand-in.
+if (typeof window.PointerEvent !== "function") {
+  window.PointerEvent = window.MouseEvent;
+}
 globalThis.window = window;
 globalThis.document = window.document;
 Object.defineProperty(globalThis, "navigator", { value: window.navigator, configurable: true });

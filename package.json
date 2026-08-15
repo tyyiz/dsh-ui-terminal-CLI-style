@@ -23,10 +23,13 @@
   "scripts": {
     "build": "node build.js",
     "prepare": "node build.js",
-    "test": "node tests/term-render-test.mjs"
+    "test": "node tests/term-render-test.mjs && node tests/term-diag-test.mjs"
   },
   "devDependencies": {
-    "jsdom": "^25.0.0"
+    "@deepseek-ai/dsh-client-web-react": "^0.1.0-rc.6",
+    "jsdom": "^25.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "keywords": [
     "deepseek-harness",

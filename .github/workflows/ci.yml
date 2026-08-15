@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dev dependencies
+        run: npm ci
+
+      - name: Build the browser bundle
+        run: node build.js
+
+      - name: Syntax check both halves
+        run: |
+          node --check lib/client.js
+          node --check lib/index.js
+
+      - name: Run the jsdom render/interaction suite (standalone deps)
+        run: npm test
+        env:
+          DSH_PROFILE_NM: node_modules
+
+      - name: Assert the built bundle is committed and current
+        run: git diff --exit-code -- lib/client.js

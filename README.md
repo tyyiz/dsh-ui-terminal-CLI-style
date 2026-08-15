@@ -1,10 +1,31 @@
 # dsh-ui-terminal
 
+[![CI](https://github.com/tyyiz/bonjourli/actions/workflows/ci.yml/badge.svg)](https://github.com/tyyiz/bonjourli/actions/workflows/ci.yml)
+
 A CLI-style **terminal interface** for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) web GUI. It shadows the built-in `root` slot (priority −1; the stock `AppFrame` registers at 0 and "lowest renders") with a full-screen command-line view over sessions, conversations, and tool activity — plus a workspace file preview card and a cross-session processing center.
 
 The stock plugins and their services keep running underneath; the terminal is a presentation layer, not a fork.
 
-## Features
+## Preview
+
+```
+┌─────────────────────────────────────────────────────────┬──────────────┐
+│ dsh▮terminal v0.5 · session 71c893cb ‹ › ⧉ · 标题 · idle │  preview     │
+├─────────────────────────────────────────────────────────┤  目录 │ 内容  │
+│ ── 14:02:31 ─ USER ───────────────────────              │  ⌂ / src      │
+│ ┃ $ 帮我优化一下这个网页的布局                           │  ▸ node_modules│
+│ ── 14:02:33 ─ ASSISTANT ────────────────────            │  · 高副低代.html│
+│ 好的，我来分析当前结构…                                  │  ⛶ ✕          │
+│ ▸ thinking……                                            │               │
+│   └─ bash {"command":"ls"}                               │  <iframe /     │
+│      ✓ done · 12ms                                      │   code view>   │
+│      ┆ index.html  …                                    │               │
+│ ────────────────────────────────────────                │               │
+│ · command output · 3 lines — \clear clears              │               │
+│ user@dsh:proj $ █                        (⚠ 2)          │               │
+└─────────────────────────────────────────────────────────┴──────────────┘
+        ↑ input bar always live        ↑ pending bubble (all sessions)
+```
 
 - **Terminal conversation view** — turn grouping, four-level hierarchy:
   - L1 user input (accent-bordered block) · L2 assistant output (markdown-rendered, collapsible `thinking……` reasoning, green code) · L3 tool tree (`→ bash {…}` / `✓ done · 1.2s` / nested output) · L4 system notices
@@ -23,7 +44,7 @@ Requirements: a running `dsh web` profile (`$DSH_HOME/profiles/web`).
 # 1. add the package as a profile dependency (pnpm resolves git deps; the
 #    prepare script builds lib/client.js automatically)
 cd "$DSH_HOME/profiles/web"
-pnpm add "git+https://github.com/<your-org>/dsh-ui-terminal.git"
+pnpm add "git+https://github.com/tyyiz/bonjourli.git"
 
 # 2. register the plugin row in $DSH_HOME/profiles/web/cordis.patch.yml:
 # - insert:
@@ -64,13 +85,17 @@ Anything else typed is sent to the current session as a message
 
 ```sh
 node build.js          # concatenates src/* into lib/client.js (no toolchain)
-npm i                  # installs jsdom for the tests
-npm test               # jsdom render/interaction suite (paths at the top of
-                       # tests/ point at a DSH profile's node_modules)
+npm i                  # dev deps: jsdom, react, react-dom, @deepseek-ai/dsh-client-web-react
+npm test               # jsdom render/interaction suite, standalone:
+                       # DSH_PROFILE_NM defaults to a DSH profile's node_modules;
+                       # set it to "node_modules" to run against the local deps
 ```
 
 While the dsh server runs, client-hmr polls the bundle — edit → `node build.js`
 → refresh is enough. Host-half changes (lib/index.js) need a server restart.
+
+CI (`.github/workflows/ci.yml`) runs `npm ci` → `node build.js` → syntax
+checks → `npm test` (with `DSH_PROFILE_NM=node_modules`) on every push.
 
 ### Structure
 

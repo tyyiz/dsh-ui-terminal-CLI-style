@@ -2,11 +2,17 @@
 // overlay with phase + error + root-slot roster.
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
 
-const PROFILE_NM = "C:/Users/Li Bojian/.dsh/profiles/node_modules";
-const BUNDLE = "C:/Users/Li Bojian/.dsh/profiles/node_modules/@dsh-local/ui-terminal/lib/client.js";
-const req = createRequire(PROFILE_NM + "/x.js");
+// The bundle under test is THIS repo's build; the seed modules (react, the
+// DSH client packages) resolve from an installed DSH web profile (override
+// with DSH_PROFILE_NM, e.g. "node_modules" in CI).
+const HERE = dirname(fileURLToPath(import.meta.url));
+const PROFILE_NM = process.env.DSH_PROFILE_NM ?? "C:/Users/Li Bojian/.dsh/profiles/node_modules";
+const BUNDLE = join(HERE, "..", "lib", "client.js");
+const req = createRequire(resolve(PROFILE_NM, "x.js"));
 
 const dom = new JSDOM("<!doctype html><html><head></head><body></body></html>", { url: "http://127.0.0.1:3080/" });
 const { window } = dom;
