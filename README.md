@@ -1,6 +1,6 @@
 # dsh-ui-terminal
 
-[![CI](https://github.com/tyyiz/bonjourli/actions/workflows/ci.yml/badge.svg)](https://github.com/tyyiz/bonjourli/actions/workflows/ci.yml)
+[![CI](https://github.com/tyyiz/dsh-ui-terminal-CLI-style/actions/workflows/ci.yml/badge.svg)](https://github.com/tyyiz/dsh-ui-terminal-CLI-style/actions/workflows/ci.yml)
 
 A CLI-style **terminal interface** for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) web GUI. It shadows the built-in `root` slot (priority −1; the stock `AppFrame` registers at 0 and "lowest renders") with a full-screen command-line view over sessions, conversations, and tool activity — plus a workspace file preview card and a cross-session processing center.
 
@@ -44,7 +44,7 @@ Requirements: a running `dsh web` profile (`$DSH_HOME/profiles/web`).
 # 1. add the package as a profile dependency (pnpm resolves git deps; the
 #    prepare script builds lib/client.js automatically)
 cd "$DSH_HOME/profiles/web"
-pnpm add "git+https://github.com/tyyiz/bonjourli.git"
+pnpm add "git+https://github.com/tyyiz/dsh-ui-terminal-CLI-style.git"
 
 # 2. register the plugin row in $DSH_HOME/profiles/web/cordis.patch.yml:
 # - insert:
@@ -52,7 +52,8 @@ pnpm add "git+https://github.com/tyyiz/bonjourli.git"
 #       name: '@dsh-local/ui-terminal'
 #       inject: [webServer, workspaceRegistry]
 
-# 3. restart the dsh server, open http://127.0.0.1:3080 and Ctrl+F5
+# 3. restart the dsh server, open the URL it prints (default
+#    http://127.0.0.1:<port>) and Ctrl+F5
 ```
 
 The row's `inject` mounts the host half (the `/wsfiles` workspace-file route);
@@ -87,8 +88,9 @@ Anything else typed is sent to the current session as a message
 node build.js          # concatenates src/* into lib/client.js (no toolchain)
 npm i                  # dev deps: jsdom, react, react-dom, @deepseek-ai/dsh-client-web-react
 npm test               # jsdom render/interaction suite, standalone:
-                       # DSH_PROFILE_NM defaults to a DSH profile's node_modules;
-                       # set it to "node_modules" to run against the local deps
+                       # DSH_PROFILE_NM defaults to ~/.dsh/profiles/node_modules
+                       # (expanded from the user's home at runtime); set it to
+                       # "node_modules" to run against the local dev deps
 ```
 
 While the dsh server runs, client-hmr polls the bundle — edit → `node build.js`
@@ -197,9 +199,8 @@ dsh web
 ### 4. Clean up browser-side leftovers (optional)
 
 - `localStorage` keys written by the UI: `dsh.term.preview` (preview-card
-  geometry). Remove them from the browser's site data for
-  `http://127.0.0.1:3080` (DevTools → Application → Local Storage) or just
-  clear site data.
+  geometry). Remove them from the browser's site data for the dsh web origin
+  (DevTools → Application → Local Storage) or just clear site data.
 - Hard-refresh (`Ctrl+F5`) once after uninstalling so the old bundle is
   dropped from the page cache.
 
