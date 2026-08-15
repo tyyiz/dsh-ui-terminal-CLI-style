@@ -170,17 +170,32 @@ The UI can be removed at three levels, from quickest to most thorough.
 ### 2. Disable the plugin (keeps the files)
 
 - Edit `$DSH_HOME/profiles/web/cordis.patch.yml` and **comment out** (or
-  delete) the `ui-terminal` row:
+  delete) the `ui-terminal` row. ⚠️ The file must ALWAYS keep a top-level
+  YAML array — if every entry is commented out, the document parses as
+  empty and `dsh` fails to boot with
+  `must be a top-level YAML array of loader patch entries`. Use exactly
+  this disabled form:
+
+  ```yaml
+  # (any comments you like)
+
+  []
+  ```
+
+  and keep the commented row above the array, e.g.:
 
   ```yaml
   # - insert:
   #     - id: ui-terminal
   #       name: '@dsh-local/ui-terminal'
   #       inject: [webServer, workspaceRegistry]
+
+  []
   ```
 
 - Restart the dsh server (`dsh web`). The stock GUI returns; the plugin
-  files stay in place so you can re-enable later by uncommenting.
+  files stay in place so you can re-enable later by replacing `[]` with the
+  `- insert:` block (never keep both).
 
 ### 3. Full uninstall (removes the files)
 
