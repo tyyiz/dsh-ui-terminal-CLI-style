@@ -114,10 +114,98 @@ src/preview.js workspace preview card    src/diag.js  diagnostics
 src/plugin.js  inject/apply + root-slot mount
 ```
 
-## How to disable
+## AI-generated notice
 
-Remove the `ui-terminal` row from `cordis.patch.yml` (and the dependency),
-then restart the dsh server — the plugin roster is composed at boot.
+This project was **written by an AI coding assistant** (a DeepSeek model running
+inside DeepSeek Harness) in interactive sessions with the repository owner,
+including feature design, implementation, debugging, and testing. Human review
+was limited to usage feedback; the code has not been independently audited by
+a professional security team.
+
+Please treat it accordingly:
+
+- **Purpose** — a personal-use UI layer for the owner's own DeepSeek Harness
+  web GUI. It is not an official DeepSeek product, is not endorsed by
+  DeepSeek, and is provided as-is.
+- **Intended use** — this repository is designed to run **only on the owner's
+  own computer** (the machine where the `dsh web` server runs and where the
+  browser connects over loopback). Nothing in it calls third-party services:
+  the bundle contains **zero external URLs** and exactly **one same-origin
+  `fetch`** (the `/wsfiles` workspace-file route).
+- **Before trusting it** — review `lib/index.js` (the only host-side surface)
+  and the `src/` sources yourself. The test suite (`npm test`) documents
+  expected behavior; it is not a security audit.
+- **No guarantees** — no warranty, no support, no liability (see LICENSE).
+  If you did not receive this repository from its owner, do not install it.
+
+### Security review (performed 2026-08-15)
+
+| Surface | Finding |
+|---|---|
+| Outbound network (browser bundle) | none — 0 external URLs; the only `fetch` targets the same-origin `/wsfiles?path=…` route |
+| Dynamic code | none — no `eval`, no `new Function`, no remote script injection in the bundle |
+| Host route (`/wsfiles`) | read-only (`GET`/`HEAD` only); every path resolved via `realpath` and must stay under the workspace root (`..`/symlink escapes → HTTP 400, verified); MIME table only, no directory writes |
+| Browser storage | `localStorage` used for UI geometry only (`dsh.term.preview` — dock width / float rect); no session data, no credentials |
+| Secrets | none embedded in source; no API keys, tokens, or passwords anywhere in the repo (scanned) |
+| Runtime APIs used | only the standard DSH client services (`sessions`, `workspaces`, `theme`, `slots`) and the same-origin `/api/respond` approval flow — the same endpoints the stock GUI uses |
+| Sandbox note | the preview card can READ workspace files through `/wsfiles` (read-only) and the processing center can APPROVE/DECLINE pending requests — these are the UI's features; if you do not want them, disable the plugin (below) |
+
+Attack-surface summary: the only new host-side code is a read-only file
+router confined to the workspace directory. There is no telemetry, no update
+channel, no external resource loading, and nothing that writes outside the
+workspace.
+
+## Disable / uninstall
+
+The UI can be removed at three levels, from quickest to most thorough.
+
+### 1. Temporarily switch back to the stock interface (no uninstall)
+
+- Type `\gui` in the terminal — the default DeepSeek Harness interface
+  returns immediately (the terminal plugin stays installed).
+- Refresh the page to re-enter the terminal.
+
+### 2. Disable the plugin (keeps the files)
+
+- Edit `$DSH_HOME/profiles/web/cordis.patch.yml` and **comment out** (or
+  delete) the `ui-terminal` row:
+
+  ```yaml
+  # - insert:
+  #     - id: ui-terminal
+  #       name: '@dsh-local/ui-terminal'
+  #       inject: [webServer, workspaceRegistry]
+  ```
+
+- Restart the dsh server (`dsh web`). The stock GUI returns; the plugin
+  files stay in place so you can re-enable later by uncommenting.
+
+### 3. Full uninstall (removes the files)
+
+```sh
+# a) remove the profile dependency
+cd "$DSH_HOME/profiles/web"
+pnpm remove @dsh-local/ui-terminal
+
+# b) remove the row from $DSH_HOME/profiles/web/cordis.patch.yml
+#    (the same block as in step 2)
+
+# c) restart the dsh server
+dsh web
+```
+
+### 4. Clean up browser-side leftovers (optional)
+
+- `localStorage` keys written by the UI: `dsh.term.preview` (preview-card
+  geometry). Remove them from the browser's site data for
+  `http://127.0.0.1:3080` (DevTools → Application → Local Storage) or just
+  clear site data.
+- Hard-refresh (`Ctrl+F5`) once after uninstalling so the old bundle is
+  dropped from the page cache.
+
+After any of steps 2–4 the terminal is gone: the root slot falls back to the
+stock `AppFrame`, no `/wsfiles` route is mounted, and no terminal code runs
+in the page.
 
 ## License
 
